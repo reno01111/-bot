@@ -1,0 +1,22 @@
+{
+  "name": "riku_server_bot",
+  "version": "1.0.0",
+  "description": "りくぴょんサーバーで使用する認証botのコード",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/reno01111/Certification-bot.git"
+  },
+  "author": "reno",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/reno01111/Certification-bot/issues"
+  },
+  "homepage": "https://github.com/reno01111/Certification-bot#readme",
+  "dependencies": {
+    "discord.js": "^14.13.0"
+  }
+}
