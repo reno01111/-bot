@@ -7,7 +7,7 @@ const client = new Client({
   ]
 });
 
-const token = "MTE1NzY4NjgwMTAyNTIyNDczNQ.Gzfp6q.ewi1tJUHYhGfm1dJGQk7OHmHOST2k01eFl4rzg"; // botのトークン
+const token = "You_Bot_token"; // botのトークン
 
 client.once('ready', async () => {
   console.log(`${client.user.tag}の起動完了！`);
