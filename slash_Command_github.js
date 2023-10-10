@@ -1,36 +1,39 @@
-const { Client, Intents } = require('discord.js');
+const { Client, IntentsBitField } = require('discord.js');
 const client = new Client({
   intents: [
-    Intents.FLAGS.GUILDS,
-    // 他の必要なIntentsを追加することができます
-  ],
+    IntentsBitField.Flags.GuildVoiceStates,
+    IntentsBitField.Flags.GuildMessages,
+    IntentsBitField.Flags.Guilds
+  ]
 });
 
-client.on('ready', async () => {
-  console.log(`Logged in as ${client.user.tag}`);
+const token = "MTE1NzY4NjgwMTAyNTIyNDczNQ.Gzfp6q.ewi1tJUHYhGfm1dJGQk7OHmHOST2k01eFl4rzg"; // botのトークン
 
-  // サーバーごとにSlashコマンドを削除する
-  for (const guild of client.guilds.cache.values()) {
+client.once('ready', async () => {
+  console.log(`${client.user.tag}の起動完了！`);
+
+  // サーバーごとにスラッシュコマンドを削除
+  for (const [_, guild] of client.guilds.cache) {
     try {
       const commands = await guild.commands.fetch();
       await Promise.all(commands.map((command) => command.delete()));
-      console.log(`All Slash commands removed in ${guild.name}`);
+      console.log(`${guild.name}で全ての(/)コマンドを削除`);
     } catch (error) {
-      console.error(`Error removing Slash commands in ${guild.name}: ${error}`);
+      console.error(`${guild.name}でスラッシュコマンドの削除エラー: ${error}`);
     }
   }
 
-  // グローバルSlashコマンドを削除する
+  // グローバルスラッシュコマンドを削除
   try {
-    const globalCommands = await client.application?.commands.fetch();
+    const globalCommands = await client.application.commands.fetch();
     await Promise.all(globalCommands.map((command) => command.delete()));
-    console.log('All Global Slash commands removed');
+    console.log('すべてのグローバル(/)コマンドを削除');
   } catch (error) {
-    console.error(`Error removing Global Slash commands: ${error}`);
+    console.error(`グローバル(/)コマンドの削除エラー: ${error}`);
   }
 
   // ログアウトして終了
   client.destroy();
 });
 
-client.login('Yor_Bot_Token');
+client.login(token);

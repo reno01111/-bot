@@ -1,7 +1,5 @@
-const { Client, IntentsBitField } = require('discord.js');
-const client = new Client({
-    intents: [IntentsBitField.Flags.GuildVoiceStates, IntentsBitField.Flags.GuildMessages, IntentsBitField.Flags.Guilds]
-});
+const { Client, Intents, MessageActionRow, MessageButton, MessageEmbed } = require('discord.js');
+const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
 
 const token = 'Yor_Bot_Token'; // botのトークン
 const channelId = 'You_Logchannel_ID'; // 認証ログを送るチャネルのID
@@ -45,21 +43,8 @@ client.on('interactionCreate', async (interaction) => {
     }
 });
 
-
-// 特定の文字列が送信されたらメッセージを返信する
 client.on('messageCreate', async (message) => {
-    if (message.content === '/cc_hello') {
-        message.reply('`起動できています！`'); // '!hello'に対して'起動できています！'と返信
-    } else if (message.content === '/cc_help') {
-        const embed = new MessageEmbed()
-            .setTitle('ヘルプ') // 'w!hellp'に対して改行を含むメッセージを返信
-            .setDescription('認証ログを送るチャンネル：#💬｜認証ログ\n付与するロール：member_s \nボタン作成されているチャンネル：✅｜コンプライアンスチェック\n全てのコマンドに最初に`/cc`を書いてから');
-        message.reply({ embeds: [embed] });
-    }
-});
-
-client.on('messageCreate', async (message) => {
-    if (message.content === '/cc_create') {
+    if (message.content === '!create') {
         const row = new MessageActionRow()
             .addComponents(
                 new MessageButton()
@@ -68,11 +53,10 @@ client.on('messageCreate', async (message) => {
                     .setStyle('PRIMARY')
             );
 
-        const embed = new MessageEmbed({
-            title: '認証を開始しますか？',
-            description: 'ボタンをクリックして認証を開始してください。',
-            color: '#ffffff',
-        });
+        const embed = new MessageEmbed()
+            .setTitle('認証を開始しますか？')
+            .setDescription('ボタンをクリックして認証を開始してください。')
+            .setColor('#ffffff');
 
         await message.channel.send({ embeds: [embed], components: [row] });
     }
@@ -86,7 +70,7 @@ client.on('interactionCreate', async (interaction) => {
 
         const member = interaction.guild.members.cache.get(interaction.user.id);
         if (member) {
-            const existingRole = member.roles.cache.find((r) => r.id === roleName);
+            const existingRole = member.roles.cache.has(roleID);
             if (existingRole) {
                 await interaction.followUp({
                     content: 'あなたはすでに認証済みです！',
@@ -98,27 +82,27 @@ client.on('interactionCreate', async (interaction) => {
 
         const questions = [
             {
-                question: '質問1: 1+1は？',
+                question: '質問1:利用規約を読みましたか？',
                 answers: [
-                    { label: '1', isCorrect: false },
-                    { label: '2', isCorrect: true },
-                    { label: '3', isCorrect: false }
+                    { label: 'はい', isCorrect: true },
+                    { label: 'いいえ', isCorrect: false },
+                    { label: '何それ', isCorrect: false }
                 ],
             },
             {
-                question: '質問2: 2+2は？',
+                question: '質問2:質問や機能の要望はどこでしますか？',
                 answers: [
-                    { label: '3', isCorrect: false },
-                    { label: '4', isCorrect: true },
-                    { label: '5', isCorrect: false }
+                    { label: '雑談', isCorrect: false },
+                    { label: '機能要望_質問', isCorrect: true },
+                    { label: '企画提案場所', isCorrect: false }
                 ],
             },
             {
-                question: '質問3: 3+3は？',
+                question: '質問3:@everyoneは誰でも使っていいですか？',
                 answers: [
-                    { label: '5', isCorrect: false },
-                    { label: '6', isCorrect: true },
-                    { label: '7', isCorrect: false }
+                    { label: '誰でもいつでも使ってok', isCorrect: false },
+                    { label: '時間によってはいい', isCorrect: false },
+                    { label: '許可なく使っちゃダメ', isCorrect: true }
                 ],
             },
         ];
@@ -138,12 +122,11 @@ client.on('interactionCreate', async (interaction) => {
                 );
             }
 
-            const questionEmbed = new MessageEmbed({
-                title: '認証',
-                description: questionData.question,
-                color: '#000000',
-                footer: { text: '「インタラクションに失敗しました」と表示されても回答はできています' } // 小さなテキストを追加
-            });
+            const questionEmbed = new MessageEmbed()
+                .setTitle('認証')
+                .setDescription(questionData.question)
+                .setColor('#000000')
+                .setFooter({ text: '次の問題が出た後に「インタラクションに失敗しました」と表示されても回答はできています' });
 
             const filter = (i) => i.customId.startsWith('answer_') && i.user.id === interaction.user.id;
 
@@ -174,53 +157,59 @@ client.on('interactionCreate', async (interaction) => {
 
         if (answeredQuestions.size === questions.length && wrongAnswers.length > 0) {
             // 全ての質問に回答済みかつ一問でも間違えている場合、認証失敗のメッセージを送信
-            const failEmbed = new MessageEmbed({
-                title: '認証失敗',
-                description: `${interaction.user}さんの認証に失敗しました。`,
-                color: '#ff0000',
-            });
+            const failEmbed = new MessageEmbed()
+                .setTitle('認証失敗')
+                .setDescription(`${interaction.user}さんの認証に失敗しました。`)
+                .setColor('#ff0000');
+
             await interaction.followUp({ embeds: [failEmbed], ephemeral: true });
 
             const channelToSend = interaction.guild.channels.cache.get(channelId);
             if (channelToSend) {
-                const embed = new MessageEmbed({
-                    title: '間違えた問題と回答者',
-                    description: `以下は${interaction.user}さんが間違えた問題と回答です：`,
-                    color: '#ff0000',
-                    fields: wrongAnswers.map((answer) => {
-                        return {
-                            name: answer.question,
-                            value: `回答者: <@${answer.user}>\n間違えた回答: ${answer.wrongAnswer}\n正しい回答: ${answer.correctAnswer}`,
-                        };
-                    }),
-                });
+                const embed = new MessageEmbed()
+                    .setTitle('間違えた問題と回答者')
+                    .setDescription(`以下は${interaction.user}さんが間違えた問題と回答です：`)
+                    .setColor('#ff0000')
+                    .addFields(
+                        wrongAnswers.map((answer) => {
+                            return {
+                                name: answer.question,
+                                value: `回答者: <@${answer.user}>\n間違えた回答: ${answer.wrongAnswer}\n正しい回答: ${answer.correctAnswer}`,
+                            };
+                        })
+                    );
+
                 await channelToSend.send({ embeds: [embed] });
             }
         } else if (answeredQuestions.size === questions.length && wrongAnswers.length === 0) {
             // 全ての質問に回答済みかつ全て正解している場合、認証成功のメッセージを送信
-            const successEmbed = new MessageEmbed({
-                title: '認証成功',
-                description: `${interaction.user}さんの認証に成功しました！`,
-                color: '#00ff00',
-            });
+            const successEmbed = new MessageEmbed()
+                .setTitle('認証成功')
+                .setDescription(`${interaction.user}さんの認証に成功しました！`)
+                .setColor('#00ff00');
+
             await interaction.followUp({ embeds: [successEmbed], ephemeral: true });
 
             const member = interaction.guild.members.cache.get(interaction.user.id);
             if (member) {
-                const role = member.roles.cache.find((r) => r.id === roleName);
-                if (!role) {
-                    await member.roles.add(roleName);
+                const role = interaction.guild.roles.cache.get(roleID);
+                if (role) {
+                    await member.roles.add(role);
+                }
+
+                const unverifiedRole = interaction.guild.roles.cache.get(unverifiedRoleID); // 未認証のロールのID
+                if (unverifiedRole) {
+                    await member.roles.remove(unverifiedRole); // 未認証のロールを削除
                 }
             }
 
             // 認証成功メッセージを指定したチャンネルに送信
             const channelToSend = interaction.guild.channels.cache.get(channelId);
             if (channelToSend) {
-                const successMessageEmbed = new MessageEmbed({
-                    title: '認証成功',
-                    description: `${interaction.user}さんが認証に成功しました！`,
-                    color: '#00ff00',
-                });
+                const successMessageEmbed = new MessageEmbed()
+                    .setTitle('認証成功')
+                    .setDescription(`${interaction.user}さんが認証に成功しました！`)
+                    .setColor('#00ff00');
                 await channelToSend.send({ embeds: [successMessageEmbed] });
             }
         } else {
@@ -238,12 +227,11 @@ client.on('interactionCreate', async (interaction) => {
                     );
                 }
 
-                const questionEmbed = new MessageEmbed({
-                    title: '認証',
-                    description: nextQuestion.question,
-                    color: '#000000',
-                    footer: { text: '「インタラクションに失敗しました」と表示されても回答はできています' } // 小さなテキストを追加
-                });
+                const questionEmbed = new MessageEmbed()
+                    .setTitle('認証')
+                    .setDescription(nextQuestion.question)
+                    .setColor('#000000')
+                    .setFooter({ text: '「インタラクションに失敗しました」と表示されても回答はできています' });
 
                 await interaction.followUp({ embeds: [questionEmbed], components: [row], ephemeral: true });
             }

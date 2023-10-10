@@ -17,6 +17,6 @@
   },
   "homepage": "https://github.com/reno01111/Certification-bot#readme",
   "dependencies": {
-    "discord.js": "^14.13.0"
+    "discord.js": "^13.16.0"
   }
 }
